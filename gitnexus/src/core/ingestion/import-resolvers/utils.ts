@@ -51,6 +51,9 @@ export const EXTENSIONS = [
   '.swift',
   // Ruby
   '.rb',
+  // Nim
+  '.nim',
+  '.nims',
 ];
 
 /**

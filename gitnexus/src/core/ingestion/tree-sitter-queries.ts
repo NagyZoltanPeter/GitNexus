@@ -1513,8 +1513,12 @@ export const NIM_QUERIES = `
   name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (func_declaration
   name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
+; A Nim method is a dynamically-dispatched routine, not a class member — it
+; is declared and called exactly like a proc. Labelling it @definition.method
+; would make GitNexus expect receiver-based dispatch and drop free-form calls
+; to it, so it is treated as a Function like every other Nim routine.
 (method_declaration
-  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.method
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (iterator_declaration
   name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (template_declaration
