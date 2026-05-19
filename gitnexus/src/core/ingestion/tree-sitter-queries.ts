@@ -1504,6 +1504,97 @@ export const DART_QUERIES = `
       (type_identifier) @heritage.trait))) @heritage
 `;
 
+// Nim queries - works with tree-sitter-nim (alaviss/tree-sitter-nim)
+export const NIM_QUERIES = `
+; Procedures, functions, methods, iterators, templates, macros, converters
+(proc_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+(func_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+(method_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.method
+(iterator_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+(template_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+(macro_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+(converter_declaration
+  name: [(identifier) (exported_symbol)] @name) @definition.function
+
+; Type declarations (object = class, concept = interface, enum = enum)
+(type_section
+  (type_declaration
+    (type_symbol_declaration
+      name: [(identifier) (exported_symbol)] @name)
+    (object_declaration))) @definition.class
+
+(type_section
+  (type_declaration
+    (type_symbol_declaration
+      name: [(identifier) (exported_symbol)] @name)
+    (enum_declaration))) @definition.class
+
+(type_section
+  (type_declaration
+    (type_symbol_declaration
+      name: [(identifier) (exported_symbol)] @name)
+    (concept_declaration))) @definition.interface
+
+; Distinct / ref / pointer / tuple / alias type declarations
+(type_section
+  (type_declaration
+    (type_symbol_declaration
+      name: [(identifier) (exported_symbol)] @name)
+    (type_expression))) @definition.class
+
+; Imports
+(import_statement) @import
+(import_from_statement
+  module: (_) @import.source) @import
+(include_statement) @import
+
+; Object inheritance via 'of' clause
+(type_section
+  (type_declaration
+    (type_symbol_declaration
+      name: [(identifier) (exported_symbol)] @heritage.class)
+    (object_declaration
+      inherits: (type_expression) @heritage.extends))) @heritage
+
+; Calls — free calls and dot calls (UFCS)
+(call
+  function: (identifier) @call.name) @call
+(call
+  function: (dot_expression
+    (identifier) @call.name)) @call
+(dot_generic_call
+  function: (identifier) @call.name) @call
+
+; Variable/constant declarations (symbol_declaration_list wraps symbol_declaration)
+(const_section
+  (variable_declaration
+    (symbol_declaration_list
+      (symbol_declaration
+        name: [(identifier) (exported_symbol)] @name)))) @definition.const
+(let_section
+  (variable_declaration
+    (symbol_declaration_list
+      (symbol_declaration
+        name: [(identifier) (exported_symbol)] @name)))) @definition.variable
+(var_section
+  (variable_declaration
+    (symbol_declaration_list
+      (symbol_declaration
+        name: [(identifier) (exported_symbol)] @name)))) @definition.variable
+
+; Object field declarations
+(field_declaration
+  (symbol_declaration_list
+    (symbol_declaration
+      name: [(identifier) (exported_symbol)] @name))) @definition.property
+`;
+
 import { SupportedLanguages } from 'gitnexus-shared';
 
 export const LANGUAGE_QUERIES: Record<SupportedLanguages, string> = {
@@ -1521,6 +1612,7 @@ export const LANGUAGE_QUERIES: Record<SupportedLanguages, string> = {
   [SupportedLanguages.Ruby]: RUBY_QUERIES,
   [SupportedLanguages.Swift]: SWIFT_QUERIES,
   [SupportedLanguages.Dart]: DART_QUERIES,
+  [SupportedLanguages.Nim]: NIM_QUERIES,
   [SupportedLanguages.Vue]: TYPESCRIPT_QUERIES, // Vue <script> blocks are parsed as TypeScript
   [SupportedLanguages.Cobol]: '', // Standalone regex processor — no tree-sitter queries
 };

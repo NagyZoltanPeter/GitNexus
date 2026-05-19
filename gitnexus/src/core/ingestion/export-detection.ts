@@ -246,3 +246,24 @@ export const rubyExportChecker: ExportChecker = (_node, _name) => true;
 
 /** Dart: public if no leading underscore (convention, same as Python). */
 export const dartExportChecker: ExportChecker = (_node, name) => !name.startsWith('_');
+
+/**
+ * Nim: exported symbols have an asterisk suffix (`proc foo*(...)`).
+ * tree-sitter-nim wraps these in an `exported_symbol` node. Walk up
+ * from the @name capture to check if it's an exported_symbol node
+ * or the parent declaration's name field is an exported_symbol.
+ */
+export const nimExportChecker: ExportChecker = (node, _name) => {
+  if (node.type === 'exported_symbol') return true;
+  let current: SyntaxNode | null = node;
+  while (current) {
+    if (current.type === 'exported_symbol') return true;
+    if (current.type === 'symbol_declaration' || current.type === 'type_symbol_declaration') {
+      const nameChild = current.childForFieldName('name');
+      if (nameChild?.type === 'exported_symbol') return true;
+      return false;
+    }
+    current = current.parent;
+  }
+  return false;
+};

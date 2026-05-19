@@ -1,0 +1,18 @@
+{
+  "name": "tree-sitter-nim",
+  "version": "0.6.2",
+  "description": "Tree-sitter grammar for Nim",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "_vendoredBy": "gitnexus-nim - vendored from alaviss/tree-sitter-nim@0.6.2. Generated src/parser.c (65MB) is NOT committed; it is regenerated from grammar.js + scanner.c by gitnexus/scripts/build-tree-sitter-nim.cjs at gitnexus postinstall (tree-sitter generate --abi=14, ~49s, deterministic). ABI 14 is compatible with the tree-sitter@0.21.1 runtime. Build deps (node-addon-api, node-gyp-build, tree-sitter-cli) are hoisted into gitnexus/package.json optionalDependencies.",
+  "author": "leorize",
+  "license": "MPL-2.0",
+  "peerDependencies": {
+    "tree-sitter": ">=0.21.0"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  }
+}

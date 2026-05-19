@@ -161,6 +161,14 @@ const SOURCES: Record<string, GrammarSource> = {
       'Kotlin parsing disabled: `tree-sitter-kotlin` is an optionalDependency ' +
       'and is not installed (or its native binding failed to build).',
   },
+  [SupportedLanguages.Nim]: {
+    load: () => _require('tree-sitter-nim'),
+    optional: true,
+    unavailableNote:
+      'Nim parsing disabled: vendored `tree-sitter-nim` (under ' +
+      '`gitnexus/vendor/tree-sitter-nim`) failed to load. ' +
+      'Likely cause: native compile failed at install (missing python3/make/g++).',
+  },
 };
 
 type LoadResult =
