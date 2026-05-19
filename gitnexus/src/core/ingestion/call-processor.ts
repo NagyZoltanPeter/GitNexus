@@ -490,7 +490,9 @@ const findEnclosingFunction = (
           }
         }
         const arityTag = arity !== undefined ? `#${arity}${encTypeTag}` : '';
-        return generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag}`);
+        // Match the definition-phase overload suffix (Nim parameter types).
+        const overloadTag = provider.overloadDisambiguator?.(current) ?? '';
+        return generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag}${overloadTag}`);
       }
     }
 
@@ -588,7 +590,9 @@ const findEnclosingFunction = (
           }
         }
         const arityTag2 = arity2 !== undefined ? `#${arity2}${encTypeTag2}` : '';
-        return generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag2}`);
+        // Match the definition-phase overload suffix (Nim parameter types).
+        const overloadTag2 = provider.overloadDisambiguator?.(current) ?? '';
+        return generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag2}${overloadTag2}`);
       }
     }
 

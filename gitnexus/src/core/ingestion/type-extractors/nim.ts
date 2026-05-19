@@ -1,6 +1,34 @@
 import type { SyntaxNode } from '../utils/ast-helpers.js';
-import type { LanguageTypeConfig, ParameterExtractor, TypeBindingExtractor } from './types.js';
+import type {
+  LanguageTypeConfig,
+  LiteralTypeInferrer,
+  ParameterExtractor,
+  TypeBindingExtractor,
+} from './types.js';
 import { extractSimpleTypeName, extractVarName } from './shared.js';
+
+/**
+ * Infer the Nim type of a literal argument node. Used to build OverloadHints
+ * so the call resolver can disambiguate overloaded routines by argument type.
+ * Returns Nim type names so they line up with the parameter type texts the
+ * method extractor records on each overload's node.
+ */
+const inferNimLiteralType: LiteralTypeInferrer = (node) => {
+  switch (node.type) {
+    case 'integer_literal':
+      return 'int';
+    case 'float_literal':
+      return 'float';
+    case 'char_literal':
+      return 'char';
+    case 'interpreted_string_literal':
+    case 'long_string_literal':
+    case 'generalized_string':
+      return 'string';
+    default:
+      return undefined;
+  }
+};
 
 const DECLARATION_NODE_TYPES: ReadonlySet<string> = new Set(['variable_declaration']);
 
@@ -66,4 +94,5 @@ export const typeConfig: LanguageTypeConfig = {
   forLoopNodeTypes: FOR_LOOP_NODE_TYPES,
   extractDeclaration,
   extractParameter,
+  inferLiteralType: inferNimLiteralType,
 };

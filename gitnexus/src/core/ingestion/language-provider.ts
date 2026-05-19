@@ -241,6 +241,33 @@ interface LanguageProviderConfig {
    */
   readonly extractTemplateConstraints?: (definitionNode: SyntaxNode) => unknown;
 
+  // ── Overload disambiguation ─────────────────────────────────────────
+  /**
+   * Produce an ID suffix that distinguishes same-name, same-file routine
+   * *overloads* whose only difference is their parameter types.
+   *
+   * GitNexus assumes top-level routines do not overload — class-owned
+   * methods get an arity/type tag, but top-level Functions get none. That
+   * holds for Go/Rust/Java/etc. but NOT for Nim, where a file routinely
+   * defines several procs (or multi-method `method`s) sharing a name and
+   * arity, distinguished only by parameter type. Without a suffix all of
+   * them collapse onto a single graph node and calls to them go ambiguous.
+   *
+   * The hook is a **pure function of the definition AST node** — given the
+   * same routine node it MUST return the same string — because the suffix
+   * is recomputed independently at several sites (definition-phase node ID
+   * in parsing-processor / parse-worker, and the enclosing-function ID
+   * recompute in call-processor / parse-worker). Any divergence silently
+   * drops edges.
+   *
+   * Return `''` for nodes that are not overloadable routines (classes,
+   * variables, zero-parameter routines) so their IDs stay unchanged.
+   *
+   * Default: undefined — no suffix is appended, so every other language's
+   * node IDs are byte-identical to before.
+   */
+  readonly overloadDisambiguator?: (definitionNode: SyntaxNode) => string;
+
   // ── Labels ────────────────────────────────────────────────────────
   /** Override the default node label for definition.function captures.
    *  Return null to skip (C/C++ duplicate), a different label to reclassify

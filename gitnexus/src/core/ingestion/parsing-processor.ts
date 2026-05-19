@@ -684,9 +684,14 @@ const processParsingSequential = async (
           constraintsTag = '';
         }
       }
+      // Overload-disambiguating suffix (Nim: parameter-type sequence). Empty
+      // for languages without the hook and for non-routine / zero-param nodes.
+      const overloadTag = definitionNode
+        ? (provider.overloadDisambiguator?.(definitionNode) ?? '')
+        : '';
       const nodeId = generateId(
         nodeLabel,
-        `${file.path}:${qualifiedName}${classTemplateTag}${arityTag}${constraintsTag}`,
+        `${file.path}:${qualifiedName}${classTemplateTag}${arityTag}${constraintsTag}${overloadTag}`,
       );
       const classNodeForSymbol = definitionNodeForRange || definitionNode || nameNode;
       const qualifiedTypeName =

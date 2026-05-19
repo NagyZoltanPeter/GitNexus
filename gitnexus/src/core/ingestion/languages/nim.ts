@@ -11,6 +11,7 @@
  */
 
 import { SupportedLanguages } from 'gitnexus-shared';
+import type { SyntaxNode } from '../utils/ast-helpers.js';
 import { createClassExtractor } from '../class-extractors/generic.js';
 import { nimClassConfig } from '../class-extractors/configs/nim.js';
 import { defineLanguage } from '../language-provider.js';
@@ -78,6 +79,57 @@ const BUILT_INS: ReadonlySet<string> = new Set([
   'slurp',
 ]);
 
+/** Nim routine declaration node types — these are the overloadable routines. */
+const NIM_ROUTINE_NODES: ReadonlySet<string> = new Set([
+  'proc_declaration',
+  'func_declaration',
+  'method_declaration',
+  'iterator_declaration',
+  'template_declaration',
+  'macro_declaration',
+  'converter_declaration',
+]);
+
+/**
+ * Overload-disambiguating ID suffix for Nim routines.
+ *
+ * Nim overloads on parameter type, so same-name same-arity routines in one
+ * file would otherwise collapse to a single graph node. The suffix is the
+ * per-parameter type sequence, e.g. `proc makeSound(d: Dog)` → `~Dog` and
+ * `proc encode(x: int, y: string)` → `~int,string`. Multi-symbol parameter
+ * groups (`a, b: int`) expand to one entry per symbol so the sequence length
+ * matches the routine's arity.
+ *
+ * Pure function of the node: returns `''` for non-routine nodes and for
+ * zero-parameter routines (whose IDs then stay unchanged).
+ */
+const nimOverloadDisambiguator = (node: SyntaxNode): string => {
+  if (!NIM_ROUTINE_NODES.has(node.type)) return '';
+  const paramList = node.childForFieldName('parameters');
+  if (!paramList) return '';
+
+  const types: string[] = [];
+  for (let i = 0; i < paramList.namedChildCount; i++) {
+    const paramDecl = paramList.namedChild(i);
+    if (!paramDecl || paramDecl.type !== 'parameter_declaration') continue;
+
+    let symbolCount = 0;
+    let typeText = '_';
+    for (let j = 0; j < paramDecl.namedChildCount; j++) {
+      const child = paramDecl.namedChild(j);
+      if (!child) continue;
+      if (child.type === 'symbol_declaration_list') {
+        symbolCount = child.namedChildren.filter((c) => c.type === 'symbol_declaration').length;
+      } else if (child.type === 'type_expression') {
+        typeText = child.text.replace(/\s+/g, '');
+      }
+    }
+    for (let k = 0; k < Math.max(symbolCount, 1); k++) types.push(typeText);
+  }
+
+  return types.length > 0 ? `~${types.join(',')}` : '';
+};
+
 export const nimProvider = defineLanguage({
   id: SupportedLanguages.Nim,
   extensions: ['.nim', '.nims', '.nimble'],
@@ -93,5 +145,6 @@ export const nimProvider = defineLanguage({
   variableExtractor: createVariableExtractor(nimVariableConfig),
   classExtractor: createClassExtractor(nimClassConfig),
   heritageExtractor: createHeritageExtractor(SupportedLanguages.Nim),
+  overloadDisambiguator: nimOverloadDisambiguator,
   builtInNames: BUILT_INS,
 });

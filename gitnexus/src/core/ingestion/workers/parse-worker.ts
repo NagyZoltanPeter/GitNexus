@@ -636,7 +636,12 @@ const findEnclosingFunctionId = (
           }
         }
         const arityTag = arity !== undefined ? `#${arity}${encTypeTag}` : '';
-        const result = generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag}`);
+        // Match the definition-phase overload suffix (Nim parameter types).
+        const overloadTag = provider.overloadDisambiguator?.(current) ?? '';
+        const result = generateId(
+          finalLabel,
+          `${filePath}:${qualifiedName}${arityTag}${overloadTag}`,
+        );
         functionIdCache.set(node, result);
         return result;
       }
@@ -691,7 +696,14 @@ const findEnclosingFunctionId = (
           }
         }
         const arityTag2 = arity2 !== undefined ? `#${arity2}${encTypeTag2}` : '';
-        const result = generateId(finalLabel, `${filePath}:${qualifiedName}${arityTag2}`);
+        // Match the definition-phase overload suffix (Nim parameter types).
+        // This enclosingFunctionFinder branch is Dart-only today; the suffix
+        // is empty for any provider without the hook.
+        const overloadTag2 = provider.overloadDisambiguator?.(sigNode) ?? '';
+        const result = generateId(
+          finalLabel,
+          `${filePath}:${qualifiedName}${arityTag2}${overloadTag2}`,
+        );
         functionIdCache.set(node, result);
         return result;
       }
@@ -2163,9 +2175,14 @@ const processFileGroup = (
         classTemplateArguments.length > 0
           ? templateArgumentsIdTag(classTemplateArguments)
           : '';
+      // Overload-disambiguating suffix (Nim: parameter-type sequence). Empty
+      // for languages without the hook and for non-routine / zero-param nodes.
+      const overloadTag = definitionNode
+        ? (provider.overloadDisambiguator?.(definitionNode) ?? '')
+        : '';
       const nodeId = generateId(
         nodeLabel,
-        `${file.path}:${qualifiedName}${classTemplateTag}${arityTag}`,
+        `${file.path}:${qualifiedName}${classTemplateTag}${arityTag}${overloadTag}`,
       );
       const classNodeForSymbol = definitionNode || nameNode;
       const qualifiedTypeName =
