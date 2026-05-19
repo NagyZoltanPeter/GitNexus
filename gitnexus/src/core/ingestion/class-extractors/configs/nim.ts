@@ -20,7 +20,11 @@ export const nimClassConfig: ClassExtractionConfig = {
 
   extractType(node) {
     for (let i = 0; i < node.namedChildCount; i++) {
-      const child = node.namedChild(i);
+      let child = node.namedChild(i);
+      // `ref object` / `ptr object` wrap the object_declaration — unwrap.
+      if (child?.type === 'ref_type' || child?.type === 'pointer_type') {
+        child = child.namedChildren.find((c) => c.type === 'object_declaration') ?? child;
+      }
       if (child?.type === 'object_declaration') return 'Class';
       if (child?.type === 'enum_declaration') return 'Enum';
       if (child?.type === 'concept_declaration') return 'Interface';

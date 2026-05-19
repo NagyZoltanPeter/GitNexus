@@ -336,12 +336,19 @@ export const findEnclosingClassInfo = (
       const symDecl = current.children?.find(
         (c: SyntaxNode) => c.type === 'type_symbol_declaration',
       );
-      const body = current.children?.find(
-        (c: SyntaxNode) =>
-          c.type === 'object_declaration' ||
-          c.type === 'enum_declaration' ||
-          c.type === 'concept_declaration',
-      );
+      const isBody = (c: SyntaxNode): boolean =>
+        c.type === 'object_declaration' ||
+        c.type === 'enum_declaration' ||
+        c.type === 'concept_declaration';
+      // `ref object` / `ptr object` nest the object_declaration inside a
+      // ref_type / pointer_type wrapper — unwrap one level to find it.
+      let body = current.children?.find(isBody);
+      if (!body) {
+        const wrapper = current.children?.find(
+          (c: SyntaxNode) => c.type === 'ref_type' || c.type === 'pointer_type',
+        );
+        body = wrapper?.children?.find(isBody);
+      }
       if (symDecl && body) {
         const nameField = symDecl.childForFieldName?.('name');
         const nameNode =

@@ -1530,11 +1530,16 @@ export const NIM_QUERIES = `
 
 ; Type declarations (object = class, concept = interface, enum = enum).
 ; The capture sits on type_declaration — one node per type — so each type in a
-; multi-type 'type' section becomes its own definition.
+; multi-type 'type' section becomes its own definition. object types are also
+; matched through the ref_type / pointer_type wrappers, since a ref object and
+; a ptr object (the common heap forms) nest the object_declaration one level
+; down rather than placing it directly under type_declaration.
 (type_declaration
   (type_symbol_declaration
     name: [(identifier) @name (exported_symbol (identifier) @name)])
-  (object_declaration)) @definition.class
+  [(object_declaration)
+   (ref_type (object_declaration))
+   (pointer_type (object_declaration))]) @definition.class
 
 (type_declaration
   (type_symbol_declaration
@@ -1546,11 +1551,11 @@ export const NIM_QUERIES = `
     name: [(identifier) @name (exported_symbol (identifier) @name)])
   (concept_declaration)) @definition.interface
 
-; Distinct / ref / pointer / tuple / alias type declarations
+; Distinct / tuple / alias / proc-type declarations
 (type_declaration
   (type_symbol_declaration
     name: [(identifier) @name (exported_symbol (identifier) @name)])
-  (type_expression)) @definition.class
+  [(type_expression) (distinct_type)]) @definition.class
 
 ; Imports — @import.source carries the raw module path (identifier or
 ; slash-separated infix_expression such as std/strutils).
@@ -1563,12 +1568,16 @@ export const NIM_QUERIES = `
   (expression_list
     [(identifier) (infix_expression)] @import.source)) @import
 
-; Object inheritance via 'of' clause
+; Object inheritance via 'of' clause — also through ref/ptr object wrappers
 (type_declaration
   (type_symbol_declaration
     name: [(identifier) @heritage.class (exported_symbol (identifier) @heritage.class)])
-  (object_declaration
-    inherits: (type_expression) @heritage.extends)) @heritage
+  [(object_declaration
+     inherits: (type_expression) @heritage.extends)
+   (ref_type (object_declaration
+     inherits: (type_expression) @heritage.extends))
+   (pointer_type (object_declaration
+     inherits: (type_expression) @heritage.extends))]) @heritage
 
 ; Calls — free calls and dot calls (UFCS)
 (call
