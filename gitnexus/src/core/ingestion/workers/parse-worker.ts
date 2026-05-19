@@ -45,6 +45,13 @@ let Kotlin: TreeSitterLanguage | null = null;
 try {
   Kotlin = _require('tree-sitter-kotlin');
 } catch {}
+
+// tree-sitter-nim is an optionalDependency — its parser.c is generated and
+// the binding compiled at gitnexus postinstall, so it may not be present.
+let Nim: TreeSitterLanguage | null = null;
+try {
+  Nim = _require('tree-sitter-nim');
+} catch {}
 import { getLanguageFromFilename } from 'gitnexus-shared';
 import {
   FUNCTION_NODE_TYPES,
@@ -329,6 +336,7 @@ const languageMap: Record<string, TreeSitterLanguage> = {
   [SupportedLanguages.Vue]: TypeScript.typescript,
   ...(Dart ? { [SupportedLanguages.Dart]: Dart } : {}),
   ...(Swift ? { [SupportedLanguages.Swift]: Swift } : {}),
+  ...(Nim ? { [SupportedLanguages.Nim]: Nim } : {}),
 };
 
 /**
