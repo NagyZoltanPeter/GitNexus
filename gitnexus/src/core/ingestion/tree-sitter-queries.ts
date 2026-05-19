@@ -1506,61 +1506,65 @@ export const DART_QUERIES = `
 
 // Nim queries - works with tree-sitter-nim (alaviss/tree-sitter-nim)
 export const NIM_QUERIES = `
-; Procedures, functions, methods, iterators, templates, macros, converters
+; Procedures, functions, methods, iterators, templates, macros, converters.
+; The name alternative captures the inner (identifier) directly so @name never
+; includes the trailing '*' export marker that wraps it in an exported_symbol.
 (proc_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (func_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (method_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.method
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.method
 (iterator_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (template_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (macro_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 (converter_declaration
-  name: [(identifier) (exported_symbol)] @name) @definition.function
+  name: [(identifier) @name (exported_symbol (identifier) @name)]) @definition.function
 
-; Type declarations (object = class, concept = interface, enum = enum)
-(type_section
-  (type_declaration
-    (type_symbol_declaration
-      name: [(identifier) (exported_symbol)] @name)
-    (object_declaration))) @definition.class
+; Type declarations (object = class, concept = interface, enum = enum).
+; The capture sits on type_declaration — one node per type — so each type in a
+; multi-type 'type' section becomes its own definition.
+(type_declaration
+  (type_symbol_declaration
+    name: [(identifier) @name (exported_symbol (identifier) @name)])
+  (object_declaration)) @definition.class
 
-(type_section
-  (type_declaration
-    (type_symbol_declaration
-      name: [(identifier) (exported_symbol)] @name)
-    (enum_declaration))) @definition.class
+(type_declaration
+  (type_symbol_declaration
+    name: [(identifier) @name (exported_symbol (identifier) @name)])
+  (enum_declaration)) @definition.class
 
-(type_section
-  (type_declaration
-    (type_symbol_declaration
-      name: [(identifier) (exported_symbol)] @name)
-    (concept_declaration))) @definition.interface
+(type_declaration
+  (type_symbol_declaration
+    name: [(identifier) @name (exported_symbol (identifier) @name)])
+  (concept_declaration)) @definition.interface
 
 ; Distinct / ref / pointer / tuple / alias type declarations
-(type_section
-  (type_declaration
-    (type_symbol_declaration
-      name: [(identifier) (exported_symbol)] @name)
-    (type_expression))) @definition.class
+(type_declaration
+  (type_symbol_declaration
+    name: [(identifier) @name (exported_symbol (identifier) @name)])
+  (type_expression)) @definition.class
 
-; Imports
-(import_statement) @import
+; Imports — @import.source carries the raw module path (identifier or
+; slash-separated infix_expression such as std/strutils).
+(import_statement
+  (expression_list
+    [(identifier) (infix_expression)] @import.source)) @import
 (import_from_statement
   module: (_) @import.source) @import
-(include_statement) @import
+(include_statement
+  (expression_list
+    [(identifier) (infix_expression)] @import.source)) @import
 
 ; Object inheritance via 'of' clause
-(type_section
-  (type_declaration
-    (type_symbol_declaration
-      name: [(identifier) (exported_symbol)] @heritage.class)
-    (object_declaration
-      inherits: (type_expression) @heritage.extends))) @heritage
+(type_declaration
+  (type_symbol_declaration
+    name: [(identifier) @heritage.class (exported_symbol (identifier) @heritage.class)])
+  (object_declaration
+    inherits: (type_expression) @heritage.extends)) @heritage
 
 ; Calls — free calls and dot calls (UFCS)
 (call
@@ -1576,23 +1580,23 @@ export const NIM_QUERIES = `
   (variable_declaration
     (symbol_declaration_list
       (symbol_declaration
-        name: [(identifier) (exported_symbol)] @name)))) @definition.const
+        name: [(identifier) @name (exported_symbol (identifier) @name)])))) @definition.const
 (let_section
   (variable_declaration
     (symbol_declaration_list
       (symbol_declaration
-        name: [(identifier) (exported_symbol)] @name)))) @definition.variable
+        name: [(identifier) @name (exported_symbol (identifier) @name)])))) @definition.variable
 (var_section
   (variable_declaration
     (symbol_declaration_list
       (symbol_declaration
-        name: [(identifier) (exported_symbol)] @name)))) @definition.variable
+        name: [(identifier) @name (exported_symbol (identifier) @name)])))) @definition.variable
 
 ; Object field declarations
 (field_declaration
   (symbol_declaration_list
     (symbol_declaration
-      name: [(identifier) (exported_symbol)] @name))) @definition.property
+      name: [(identifier) @name (exported_symbol (identifier) @name)]))) @definition.property
 `;
 
 import { SupportedLanguages } from 'gitnexus-shared';

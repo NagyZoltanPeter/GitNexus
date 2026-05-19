@@ -100,6 +100,13 @@ export const FUNCTION_NODE_TYPES = new Set([
   // Dart
   'function_signature',
   'method_signature',
+  // Nim — routine declarations (method_declaration already included above)
+  'proc_declaration',
+  'func_declaration',
+  'iterator_declaration',
+  'template_declaration',
+  'macro_declaration',
+  'converter_declaration',
 ]);
 
 /**
@@ -319,6 +326,45 @@ export const findEnclosingClassInfo = (
         }
       }
     }
+    // Nim: type_declaration wraps the name (in type_symbol_declaration) and the
+    // body (object/enum/concept) as siblings. The body node carries no name, so
+    // the generic CLASS_CONTAINER handler below cannot resolve it — handle the
+    // whole type_declaration here, mirroring the Go block above. Go and Nim are
+    // mutually exclusive by structure (Go has type_spec, Nim has
+    // type_symbol_declaration), so both `type_declaration` blocks are safe.
+    if (current.type === 'type_declaration') {
+      const symDecl = current.children?.find(
+        (c: SyntaxNode) => c.type === 'type_symbol_declaration',
+      );
+      const body = current.children?.find(
+        (c: SyntaxNode) =>
+          c.type === 'object_declaration' ||
+          c.type === 'enum_declaration' ||
+          c.type === 'concept_declaration',
+      );
+      if (symDecl && body) {
+        const nameField = symDecl.childForFieldName?.('name');
+        const nameNode =
+          nameField?.type === 'exported_symbol'
+            ? nameField.namedChildren?.find((c: SyntaxNode) => c.type === 'identifier')
+            : nameField;
+        if (nameNode) {
+          // Match the label the node actually carries: the classExtractor
+          // reclassifies enum_declaration → Enum and concept → Interface;
+          // object stays Class.
+          const label =
+            body.type === 'concept_declaration'
+              ? 'Interface'
+              : body.type === 'enum_declaration'
+                ? 'Enum'
+                : 'Class';
+          return {
+            classId: generateId(label, `${filePath}:${nameNode.text}`),
+            className: nameNode.text,
+          };
+        }
+      }
+    }
     if (CLASS_CONTAINER_TYPES.has(current.type)) {
       // Delegate language-specific container remapping to the provider hook.
       if (resolveEnclosingOwner) {
@@ -453,7 +499,18 @@ export const findSiblingChild = (
  *  here. See issue #1166. */
 export const genericFuncName = (node: SyntaxNode): string | null => {
   const nameField = node.childForFieldName?.('name');
-  if (nameField) return nameField.text;
+  if (nameField) {
+    // Nim: exported routines wrap the name in an `exported_symbol` node
+    // (`proc foo*`). Return the inner identifier so the resolved name matches
+    // the graph node, whose name is captured without the `*` marker.
+    if (nameField.type === 'exported_symbol') {
+      for (let i = 0; i < nameField.childCount; i++) {
+        const c = nameField.child(i);
+        if (c?.type === 'identifier') return c.text;
+      }
+    }
+    return nameField.text;
+  }
   if (node.type === 'arrow_function' || node.type === 'function_expression') {
     return null;
   }
