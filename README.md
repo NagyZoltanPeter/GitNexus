@@ -1,6 +1,14 @@
 # GitNexus
 **⚠️ Important Notice:** GitNexus has NO official cryptocurrency, token, or coin. Any token/coin using the GitNexus name on Pump.fun or any other platform is **not affiliated with, endorsed by, or created by** this project or its maintainers. Do not purchase any cryptocurrency claiming association with GitNexus.
 
+> **Fork notice — Nim language support.** This fork of
+> [`abhigyanpatwari/GitNexus`](https://github.com/abhigyanpatwari/GitNexus)
+> adds first-class indexing for the [Nim](https://nim-lang.org/) programming
+> language via the [`alaviss/tree-sitter-nim`](https://github.com/alaviss/tree-sitter-nim)
+> grammar. See [**NIM.md**](NIM.md) for install instructions, validation
+> results on `status/nwaku`, the architecture, and known gaps.
+> Everything below is upstream documentation and continues to apply.
+
 <div align="center">
 
   <a href="https://trendshift.io/repositories/19809" target="_blank">
